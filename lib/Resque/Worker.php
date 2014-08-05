@@ -158,10 +158,7 @@ class Resque_Worker
     }
 
     /**
-     * The primary loop for a worker which when called on an instance starts
-     * the worker's life cycle.
-     *
-     * Queues are checked every $interval (seconds) for new jobs.
+     * Main loop for the parent process.
      *
      * @param int $interval How often to check for new jobs across the queues.
      */
@@ -200,16 +197,8 @@ class Resque_Worker
 
                 $exitStatus = pcntl_wexitstatus($status);
                 if ($exitStatus !== 0) {
-                    $job = $this->job(); // we need to know which job the child was last working on
-                    if ($job) {
-                        $this->logger->critical('Child exited with exit code ' . $exitStatus);
-
-                        $job->fail(
-                            new Resque_Job_DirtyExitException(
-                                'Child exited with exit code ' . $exitStatus
-                            )
-                        );
-                    }
+                    $this->logger->critical('Child exited with exit code ' . $exitStatus);
+                    $this->failCurrentJob($exitStatus);
                 }
             }
 
@@ -667,5 +656,22 @@ class Resque_Worker
     public function setLogger(Psr\Log\LoggerInterface $logger)
     {
         $this->logger = $logger;
+    }
+
+    /**
+     * @param $exitStatus
+     */
+    private function failCurrentJob($exitStatus)
+    {
+        $jobData = $this->job(); // we need to know which job the child was last working on
+        if (!empty($jobData)) {
+            $job = new Resque_Job($jobData['queue'], $jobData['payload']);
+            $job->worker = $this;
+            $job->fail(
+                new Resque_Job_DirtyExitException(
+                    'Child exited with exit code ' . $exitStatus
+                )
+            );
+        }
     }
 }
