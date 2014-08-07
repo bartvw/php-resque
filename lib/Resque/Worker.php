@@ -465,12 +465,12 @@ class Resque_Worker
     {
         $this->logger->log(Psr\Log\LogLevel::NOTICE, 'QUIT signal received. Shutting down');
         $this->shutdown = true;
-//        if ($this->child) {
-//            // tell the child to stop after the current job
-//            $this->signalChild(SIGQUIT);
-//        } else {
-//            $this->logger->info('No child to kill');
-//        }
+        if ($this->child) {
+            // tell the child to stop after the current job
+            $this->signalChild(SIGQUIT);
+        } else {
+            $this->logger->info('No child to kill');
+        }
 
     }
 
