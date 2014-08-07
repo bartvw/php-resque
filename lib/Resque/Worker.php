@@ -199,11 +199,11 @@ class Resque_Worker
                 if ($exitStatus !== 0) {
                     $this->logger->critical('Child exited with exit code ' . $exitStatus);
                     $this->failCurrentJob($exitStatus);
+                    $this->doneWorking();
                 }
             }
 
             $this->child = null;
-            $this->doneWorking();
         }
 
         $this->unregisterWorker();
